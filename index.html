@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>蕎淶清飲 | Chillax Recipe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=Noto+Serif+TC:wght@300;900&family=Noto+Sans+TC:wght@100;300;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1C1C1C;
+            --tiffany-blue: #81D8D0;
+            --tiffany-dark: #58A7A0;
+            --tiffany-light: #F0FBFA;
+            --paper: #FFFFFF;
+            --border-soft: rgba(0, 0, 0, 0.05);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--paper);
+            color: var(--ink);
+            overflow: hidden;
+            letter-spacing: 0.05em;
+        }
+
+        /* --- Page System --- */
+        .page-container { width: 100vw; height: 100vh; position: relative; }
+
+        .page {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: none; 
+            overflow-y: auto;
+            background-color: var(--paper);
+            padding-bottom: 120px;
+            z-index: 10;
+        }
+        .page.active { display: block; animation: pageFade 0.5s ease-out; }
+
+        @keyframes pageFade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Navigation --- */
+        .floating-menu-btn {
+            position: fixed;
+            top: 25px; right: 25px;
+            z-index: 5000;
+            background: var(--ink);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0; right: -100%; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 6000;
+            transition: right 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            padding: 60px 0;
+        }
+        .menu-overlay.open { right: 0; }
+
+        .menu-grid { display: flex; flex-direction: column; gap: 8px; width: 85%; max-width: 450px; }
+        .menu-link {
+            padding: 14px 20px; border-bottom: 1px solid var(--border-soft);
+            background: var(--paper); text-align: left; font-weight: 700;
+            letter-spacing: 1px; font-size: 0.9rem; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .menu-link.cat-label { 
+            background: var(--tiffany-light); border: none; font-size: 0.65rem; 
+            color: var(--tiffany-dark); margin-top: 18px; pointer-events: none;
+            letter-spacing: 4px; font-weight: 900; text-transform: uppercase;
+        }
+
+        /* --- Cover Page --- */
+        #page-cover {
+            background-color: var(--tiffany-blue);
+            color: white;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        #page-cover.active { display: flex; }
+        .thin-title { 
+            font-family: 'Playfair Display', serif; 
+            font-weight: 100; 
+            font-size: clamp(2.5rem, 10vw, 4.5rem); 
+            letter-spacing: 0.15em; 
+            font-style: italic;
+            margin-bottom: 3rem; 
+        }
+        .enter-btn { background: white; color: var(--ink); border: none; padding: 20px 80px; font-size: 0.8rem; letter-spacing: 10px; font-weight: 900; cursor: pointer; }
+
+        /* --- Layout Structure --- */
+        .recipe-banner { padding: 100px 25px 50px; text-align: center; background-color: var(--tiffany-light); border-bottom: 1px solid var(--border-soft); }
+        .recipe-name { font-family: 'Noto Serif TC', serif; font-size: clamp(1.6rem, 8vw, 2.4rem); letter-spacing: 8px; font-weight: 900; color: var(--ink); }
+        .recipe-chapter { font-family: 'Playfair Display', serif; font-size: 0.65rem; letter-spacing: 8px; color: var(--tiffany-dark); margin-bottom: 10px; display: block; font-weight: bold; }
+        
+        .recipe-intro { font-size: 0.9rem; line-height: 1.8; color: #777; max-width: 500px; margin: 20px auto 0; font-weight: 300; font-style: italic; }
+
+        .recipe-body { max-width: 900px; margin: 0 auto; padding: 40px 20px 100px; }
+        .section-label { font-size: 1rem; font-weight: 900; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .section-label span { font-size: 0.55rem; color: var(--tiffany-dark); letter-spacing: 3px; font-weight: bold; }
+
+        .ing-row { display: flex; justify-content: space-between; padding: 18px 10px; border-bottom: 1px solid var(--border-soft); font-size: 1.1rem; align-items: center; }
+        .ing-n { font-weight: 300; color: #555; }
+        .ing-v { font-weight: 700; color: var(--ink); text-align: right; }
+
+        .special-note { background: #FAFAFA; padding: 22px; border-radius: 4px; border-left: 5px solid var(--tiffany-blue); margin-bottom: 35px; font-size: 0.85rem; line-height: 1.8; color: #444; }
+        .special-note b { color: var(--tiffany-dark); font-weight: 900; }
+        
+        /* Expert Notes */
+        .expert-notes { 
+            margin-top: 60px; padding: 35px; background-color: var(--tiffany-light); 
+            border: 1px solid var(--tiffany-blue); border-radius: 6px; position: relative;
+        }
+        .expert-notes h5 { 
+            font-size: 0.85rem; letter-spacing: 4px; color: white; background: var(--tiffany-blue);
+            display: inline-block; padding: 4px 15px; margin-bottom: 20px; text-transform: uppercase;
+            position: absolute; top: -15px; left: 20px; border-radius: 50px;
+        }
+        .note-sec { margin-bottom: 20px; }
+        .note-txt { font-size: 0.9rem; line-height: 2; color: #444; }
+
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        
+        <button class="floating-menu-btn" id="menu-btn" style="display:none;" onclick="toggleMenu()">INDEX</button>
+
+        <div class="menu-overlay" id="menu-overlay">
+            <div class="menu-grid">
+                <div class="menu-link cat-label">核心技術 - CORE</div>
+                <div class="menu-link" onclick="openPage('p-tangzhong')">靈魂湯種工法</div>
+                
+                <div class="menu-link cat-label">華夫格格 - WAFFLE</div>
+                <div class="menu-link" onclick="openPage('w-orig')">經典原味鬆餅</div>
+                <div class="menu-link" onclick="openPage('w-straw')">天然草莓鬆餅</div>
+                <div class="menu-link" onclick="openPage('w-cocoa')">法芙娜可可鬆餅</div>
+                <div class="menu-link" onclick="openPage('w-matcha')">靜岡抹茶鬆餅</div>
+
+                <div class="menu-link cat-label">手作點心 - BAKERY</div>
+                <div class="menu-link" onclick="openPage('b-bun')">手撕小餐包</div>
+                <div class="menu-link" onclick="openPage('b-horn')">牛角小布利</div>
+                <div class="menu-link" onclick="openPage('c-cookie')">職人創意曲奇</div>
+                <div class="menu-link" onclick="openPage('c-tuile')">精品杏仁瓦片</div>
+                
+                <div class="menu-link cat-label">甜點與冰沙 - DESSERT</div>
+                <div class="menu-link" onclick="openPage('c-panna')">職人手作鮮奶酪</div>
+                <div class="menu-link" onclick="openPage('s-greenbean')">古早味綠豆冰沙</div>
+            </div>
+            <button class="enter-btn" onclick="toggleMenu()" style="background:var(--ink); color:white; padding: 12px 40px; letter-spacing: 4px; margin-top: 30px;">CLOSE</button>
+        </div>
+
+        <!-- Cover -->
+        <div id="page-cover" class="page active">
+            <h1 class="thin-title">Chillax recipe</h1>
+            <button class="enter-btn" onclick="openPage('p-tangzhong')">ENTER GALLERY</button>
+        </div>
+
+        <!-- Tangzhong Page -->
+        <div id="p-tangzhong" class="page">
+            <div class="recipe-banner">
+                <span class="recipe-chapter">CORE 01</span>
+                <h2 class="recipe-name">靈魂湯種工法</h2>
+                <p class="recipe-intro">澱粉與水的物理相遇，締造長效柔軟的秘密武器。</p>
+            </div>
+            <div class="recipe-body">
+                <div class="section-label">單份配比 <span>RATIO</span></div>
+                <div class="ing-row"><span class="ing-n">高筋麵粉</span><span class="ing-v">22g</span></div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">冷水</span><span class="ing-v">115cc</span></div>
+                
+                <div class="section-label" style="margin-top:50px;">工法流程 <span>S.O.P.</span></div>
+                <p style="font-size:1.1rem; line-height:2.4;">
+                    1. <b>冷水攪拌：</b>將高筋麵粉與冷水在鍋中先攪拌均勻，確保無粉粒。<br>
+                    2. <b>小火加熱：</b>開小火邊煮邊攪拌，直到麵糊變濃稠出現紋路（約 65°C 糊化）。<br>
+                    3. <b>保存：</b>表面貼膜防止結皮。放涼後可當天使用，或冷藏保存。
+                </p>
+            </div>
+        </div>
+
+        <div id="waffle-container"></div>
+        <div id="other-pages"></div>
+
+    </div>
+
+    <script>
+        // --- Waffle Data Configuration ---
+        const waffleData = [
+            { 
+                id: 'w-orig', title: '經典原味鬆餅', sugar: '70g', milk: '85cc', cream: '70cc', 
+                flavor: `
+                    <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">全脂奶粉</span><span class="ing-v">25g</span></div>
+                    <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">柏泰奶香粉</span><span class="ing-v">5g</span></div>
+                `, 
+                notes: '<b>配方調整：</b>新增柏泰奶香粉，奶粉調整為 25g。鮮奶油改為量杯計算之 70cc。' 
+            },
+            { 
+                id: 'w-straw', title: '天然草莓鬆餅', sugar: '80g', milk: '50cc', cream: '50cc', 
+                flavor: `
+                    <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">天然草莓粉</span><span class="ing-v">30g</span></div>
+                    <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">伯泰草莓粉 (定色)</span><span class="ing-v">10g</span></div>
+                `, 
+                notes: '<b>草莓配比：</b>鮮奶油與牛奶調整為 50:50 比例(cc)，保持風味清亮。' 
+            },
+            { 
+                id: 'w-cocoa', title: '法芙娜可可鬆餅', sugar: '80g', milk: '100cc', cream: '80cc', 
+                flavor: '<div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">法芙娜(Valrhona)可可粉</span><span class="ing-v">30g</span></div>', 
+                notes: '<b>可可風味：</b>重油脂配比，鮮奶油使用 80cc 提供乳脂濃香。' 
+            },
+            { 
+                id: 'w-matcha', title: '靜岡抹茶鬆餅', sugar: '80g', milk: '110cc', cream: '80cc', 
+                flavor: '<div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">靜岡(Shizuoka)抹茶粉</span><span class="ing-v">30g</span></div>', 
+                notes: '<b>茶韻調整：</b>抹茶吸水力強，牛奶與鮮奶油量略高於原味。' 
+            }
+        ];
+
+        // --- Render Waffles ---
+        let wHtml = "";
+        waffleData.forEach(d => {
+            wHtml += `
+            <div id="${d.id}" class="page">
+                <div class="recipe-banner">
+                    <span class="recipe-chapter">WAFFLE ARTISAN</span>
+                    <h2 class="recipe-name">${d.title}</h2>
+                </div>
+                <div class="recipe-body">
+                    <div class="section-label">第一階段：水合 <span>STAGE 01</span></div>
+                    ${d.flavor}
+                    <div class="ing-row"><span class="ing-n">高筋麵粉</span><span class="ing-v">100g</span></div>
+                    <div class="ing-row"><span class="ing-n">中筋麵粉</span><span class="ing-v">320g</span></div>
+                    <div class="ing-row"><span class="ing-n">玉米澱粉</span><span class="ing-v">80g</span></div>
+                    <div class="ing-row"><span class="ing-n">鹽</span><span class="ing-v">4g</span></div>
+                    <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">二砂糖</span><span class="ing-v">${d.sugar}</span></div>
+                    <div class="ing-row"><span class="ing-n">牛奶</span><span class="ing-v">${d.milk}</span></div>
+                    <div class="ing-row"><span class="ing-n">雞蛋 (全蛋液)</span><span class="ing-v">2 顆</span></div>
+                    <div class="ing-row"><span class="ing-n">鮮奶油</span><span class="ing-v">${d.cream}</span></div>
+                    <div class="ing-row"><span class="ing-n">靈魂湯種 (130g)</span><span class="ing-v">1 團</span></div>
+                    
+                    <div class="section-label" style="margin-top:60px;">第二階段：揉麵、分割 <span>STAGE 02</span></div>
+                    <div class="ing-row"><span class="ing-n">速發酵母</span><span class="ing-v">2 匙</span></div>
+                    <div class="ing-row"><span class="ing-n">無鹽奶油</span><span class="ing-v">120g</span></div>
+                    <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">泡打粉 (末段揉入)</span><span class="ing-v">4g</span></div>
+                    <div class="special-note">每顆 <b>14.5g</b> 分割 (單份產出約 80 顆)。揉製完成後靜置 > 1小時。</div>
+                    <div class="expert-notes"><h5>職人點評</h5><div class="note-sec"><p class="note-txt">${d.notes}</p></div></div>
+                </div>
+            </div>`;
+        });
+        document.getElementById('waffle-container').innerHTML = wHtml;
+
+        // --- Controller Logic ---
+        function openPage(id) {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+
+            const target = document.getElementById(id);
+            if(target) {
+                target.style.display = 'block';
+                setTimeout(() => target.classList.add('active'), 10);
+                target.scrollTop = 0;
+            }
+            document.getElementById('menu-btn').style.display = (id === 'page-cover') ? 'none' : 'block';
+            document.getElementById('menu-overlay').classList.remove('open');
+        }
+
+        function toggleMenu() { document.getElementById('menu-overlay').classList.toggle('open'); }
+    </script>
+</body>
+</html>
+
