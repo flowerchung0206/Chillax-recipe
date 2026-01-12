@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>蕎淶清飲 | Chillax Recipe</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,400&family=Noto+Serif+TC:wght@300;900&family=Noto+Sans+TC:wght@100;300;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #1C1C1C;
+            --tiffany-blue: #81D8D0;
+            --tiffany-dark: #58A7A0;
+            --tiffany-light: #F0FBFA;
+            --paper: #FFFFFF;
+            --border-soft: rgba(0, 0, 0, 0.05);
+            --gold-accent: #947A5C;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--paper);
+            color: var(--ink);
+            overflow: hidden;
+            letter-spacing: 0.05em;
+        }
+
+        /* --- 頁面系統 --- */
+        .page-container { width: 100vw; height: 100vh; position: relative; }
+
+        .page {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            display: none; 
+            overflow-y: auto;
+            background-color: var(--paper);
+            padding-bottom: 120px;
+            z-index: 10;
+        }
+        .page.active { display: block; animation: pageFade 0.5s ease-out; }
+
+        @keyframes pageFade { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- 導航 --- */
+        .floating-menu-btn {
+            position: fixed;
+            top: 25px; right: 25px;
+            z-index: 5000;
+            background: var(--ink);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            font-size: 0.65rem;
+            letter-spacing: 3px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .menu-overlay {
+            position: fixed;
+            top: 0; right: -100%; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 6000;
+            transition: right 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-y: auto;
+            padding: 60px 0;
+        }
+        .menu-overlay.open { right: 0; }
+
+        .menu-grid { display: flex; flex-direction: column; gap: 8px; width: 85%; max-width: 450px; }
+        .menu-link {
+            padding: 14px 20px; border-bottom: 1px solid var(--border-soft);
+            background: var(--paper); text-align: left; font-weight: 700;
+            letter-spacing: 1px; font-size: 0.9rem; cursor: pointer;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .menu-link.cat-label { 
+            background: var(--tiffany-light); border: none; font-size: 0.65rem; 
+            color: var(--tiffany-dark); margin-top: 18px; pointer-events: none;
+            letter-spacing: 4px; font-weight: 900; text-transform: uppercase;
+        }
+
+        /* --- 封面頁 --- */
+        #page-cover {
+            background-color: var(--tiffany-blue);
+            color: white;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        #page-cover.active { display: flex; }
+        .thin-title { 
+            font-family: 'Playfair Display', serif; 
+            font-weight: 100; 
+            font-size: clamp(2.5rem, 10vw, 4.5rem); 
+            letter-spacing: 0.15em; 
+            font-style: italic;
+            margin-bottom: 3rem; 
+        }
+        .enter-btn { background: white; color: var(--ink); border: none; padding: 20px 80px; font-size: 0.8rem; letter-spacing: 10px; font-weight: 900; cursor: pointer; }
+
+        /* --- 內容架構 --- */
+        .recipe-banner { padding: 100px 25px 50px; text-align: center; background-color: var(--tiffany-light); border-bottom: 1px solid var(--border-soft); }
+        .recipe-name { font-family: 'Noto Serif TC', serif; font-size: clamp(1.6rem, 8vw, 2.4rem); letter-spacing: 8px; font-weight: 900; color: var(--ink); }
+        .recipe-chapter { font-family: 'Playfair Display', serif; font-size: 0.65rem; letter-spacing: 8px; color: var(--tiffany-dark); margin-bottom: 10px; display: block; font-weight: bold; }
+
+        .recipe-body { max-width: 900px; margin: 0 auto; padding: 40px 20px 100px; }
+        .section-label { font-size: 1rem; font-weight: 900; border-bottom: 2px solid var(--ink); padding-bottom: 10px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .section-label span { font-size: 0.55rem; color: var(--tiffany-dark); letter-spacing: 3px; font-weight: bold; }
+
+        .ing-row { display: flex; justify-content: space-between; padding: 18px 10px; border-bottom: 1px solid var(--border-soft); font-size: 1.1rem; align-items: center; }
+        .ing-n { font-weight: 300; color: #555; }
+        .ing-v { font-weight: 700; color: var(--ink); text-align: right; }
+
+        /* 特殊備註區 */
+        .special-note { background: #FAFAFA; padding: 22px; border-radius: 4px; border-left: 5px solid var(--tiffany-blue); margin-bottom: 35px; font-size: 0.85rem; line-height: 1.8; color: #444; }
+        .special-note b { color: var(--tiffany-dark); font-weight: 900; }
+        
+        .step-block { margin-bottom: 40px; }
+        .step-num { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--tiffany-blue); margin-bottom: 8px; display: block; font-style: italic; }
+        .step-text { font-size: 1.1rem; line-height: 2.2; color: var(--ink); text-align: justify; }
+
+        /* 職人點評 (Tiffany 標注) */
+        .expert-notes { 
+            margin-top: 60px; padding: 35px; background-color: var(--tiffany-light); 
+            border: 1px solid var(--tiffany-blue); border-radius: 6px; position: relative;
+        }
+        .expert-notes h5 { 
+            font-size: 0.85rem; letter-spacing: 4px; color: white; background: var(--tiffany-blue);
+            display: inline-block; padding: 4px 15px; margin-bottom: 20px; text-transform: uppercase;
+            position: absolute; top: -15px; left: 20px; border-radius: 50px;
+        }
+        .note-sec { margin-bottom: 20px; }
+        .note-title { font-weight: 900; font-size: 0.95rem; color: var(--tiffany-dark); margin-bottom: 8px; display: block; border-left: 3px solid var(--tiffany-blue); padding-left: 10px; }
+        .note-txt { font-size: 0.9rem; line-height: 2; color: #444; }
+        .note-txt b { color: var(--ink); font-weight: 900; }
+
+        /* 三欄表格 */
+        .weight-grid { display: grid; grid-template-columns: 1fr; gap: 20px; margin-bottom: 30px; }
+        @media (min-width: 600px) { .weight-grid { grid-template-columns: 1fr 1fr 1fr; } }
+        .weight-box { background: #FAFAFA; border: 1px solid var(--border-soft); padding: 15px; border-radius: 8px; }
+        .weight-title { font-weight: 900; color: var(--tiffany-dark); font-size: 0.95rem; margin-bottom: 15px; text-align: center; border-bottom: 1.5px solid var(--tiffany-light); padding-bottom: 8px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="page-container">
+        
+        <button class="floating-menu-btn" id="menu-btn" style="display:none;" onclick="toggleMenu()">INDEX</button>
+
+        <div class="menu-overlay" id="menu-overlay">
+            <div class="menu-grid">
+                <div class="menu-link cat-label">核心技術 - CORE</div>
+                <div class="menu-link" onclick="openPage('p-tangzhong')">靈魂湯種工法</div>
+                
+                <div class="menu-link cat-label">華夫格格 - WAFFLE</div>
+                <div class="menu-link" onclick="openPage('w-orig')">經典原味鬆餅</div>
+                <div class="menu-link" onclick="openPage('w-straw')">天然草莓鬆餅</div>
+                <div class="menu-link" onclick="openPage('w-cocoa')">法芙娜可可鬆餅</div>
+                <div class="menu-link" onclick="openPage('w-matcha')">靜岡抹茶鬆餅</div>
+
+                <div class="menu-link cat-label">手作點心 - BAKERY</div>
+                <div class="menu-link" onclick="openPage('b-bun')">手撕小餐包</div>
+                <div class="menu-link" onclick="openPage('b-horn')">牛角小布利</div>
+                <div class="menu-link" onclick="openPage('c-cookie')">職人創意曲奇</div>
+                <div class="menu-link" onclick="openPage('c-tuile')">精品杏仁瓦片</div>
+                
+                <div class="menu-link cat-label">甜點與冰沙 - DESSERT</div>
+                <div class="menu-link" onclick="openPage('c-panna')">職人手作鮮奶酪</div>
+                <div class="menu-link" onclick="openPage('s-greenbean')">古早味綠豆冰沙</div>
+
+                <div class="menu-link cat-label">飲品系列 - DRINKS</div>
+                <div class="menu-link" onclick="openPage('d-fruit')">果漾調茶系列</div>
+                <div class="menu-link" onclick="openPage('d-thai')">泰式奶茶系列</div>
+                <div class="menu-link" onclick="openPage('d-milktea')">職人奶茶系列</div>
+                <div class="menu-link" onclick="openPage('d-latte')">鮮奶拿鐵系列</div>
+                <div class="menu-link" onclick="openPage('d-herbal')">草本植萃系列</div>
+                <div class="menu-link" onclick="openPage('d-others')">可爾必思 / 冰沙 / 冬瓜</div>
+            </div>
+            <button class="enter-btn" onclick="toggleMenu()" style="background:var(--ink); color:white; padding: 12px 40px; letter-spacing: 4px; margin-top: 30px;">CLOSE</button>
+        </div>
+
+        <!-- 封面 -->
+        <div id="page-cover" class="page active">
+            <h1 class="thin-title">Chillax recipe</h1>
+            <button class="enter-btn" onclick="openPage('p-tangzhong')">ENTER GALLERY</button>
+        </div>
+
+        <!-- 2. 湯種頁 -->
+        <div id="p-tangzhong" class="page">
+            <div class="recipe-banner">
+                <span class="recipe-chapter">CORE 01</span>
+                <h2 class="recipe-name">靈魂湯種工法</h2>
+            </div>
+            <div class="recipe-body">
+                <div class="section-label">單份配比 <span>RATIO</span></div>
+                <div class="ing-row"><span class="ing-n">高筋麵粉</span><span class="ing-v">22g</span></div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">冷水</span><span class="ing-v">115cc</span></div>
+                
+                <div class="section-label" style="margin-top:50px;">工法流程 <span>S.O.P.</span></div>
+                <p style="font-size:1.1rem; line-height:2.4;">
+                    1. <b>冷水攪拌：</b>將高筋麵粉與冷水在鍋中先攪拌均勻，確保無粉粒。<br>
+                    2. <b>小火加熱：</b>開小火邊煮邊攪拌，直到麵糊變濃稠出現紋路（約 65°C 糊化）。<br>
+                    3. <b>保存：</b>表面貼膜防止結皮。放涼後可當天使用，或冷藏保存。
+                </p>
+
+                <div class="expert-notes">
+                    <h5>職人點評</h5>
+                    <div class="note-sec">
+                        <span class="note-title">核心標注</span>
+                        <p class="note-txt">1.35 的高水比是為了創造超凡的保水力，這是成品放涼後依然維持 <b>Q 彈且延緩老化</b> 的關鍵技術。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="waffle-container"></div>
+
+        <!-- 手撕小餐包 -->
+        <div id="b-bun" class="page">
+            <div class="recipe-banner">
+                <span class="recipe-chapter">BAKERY 06</span>
+                <h2 class="recipe-name">手撕小餐包</h2>
+            </div>
+            <div class="recipe-body">
+                <div class="section-label">材料配比 <span>INGREDIENTS</span></div>
+                <div class="ing-row"><span class="ing-n">中筋麵粉</span><span class="ing-v">300g</span></div>
+                <div class="ing-row"><span class="ing-n">雞蛋 (全蛋液)</span><span class="ing-v">20g</span></div>
+                <div class="ing-row"><span class="ing-n">牛奶</span><span class="ing-v">110cc</span></div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">鮮奶油</span><span class="ing-v">100g</span></div>
+                <div class="ing-row"><span class="ing-n">砂糖</span><span class="ing-v">30g</span></div>
+                <div class="ing-row"><span class="ing-n">速發酵母</span><span class="ing-v">3g</span></div>
+                <div class="ing-row"><span class="ing-n">鹽</span><span class="ing-v">3g</span></div>
+
+                <div class="section-label" style="margin-top:60px;">製作流程 (攪拌定位)</div>
+                <p style="font-size:1.1rem; line-height:2.4;">
+                    1. <b>攪拌：</b>將全料投入麵包機，啟動<b>行程 13 (僅供攪拌使用)</b>。<br>
+                    2. <b>醒麵：</b>取出後分割揉圓，覆蓋濕布醒麵 10 分鐘，釋放筋度。<br>
+                    3. <b>發酵：</b>再次揉圓入烤盤，發酵 50 分鐘。<br>
+                    4. <b>烘烤：</b>預熱 200°C，刷蛋液灑芝麻，烘烤 12 分鐘。
+                </p>
+                <div class="expert-notes">
+                    <h5>職人點評</h5>
+                    <div class="note-sec"><span class="note-title">攪拌重點</span><p class="note-txt"><b>僅取其攪拌力：</b>鮮奶油佔比極高，攪拌後的麵糰應呈現細膩且具延展性的光澤。機器僅用於取代人力揉麵，不執行烘烤。</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 牛角小布利 -->
+        <div id="b-horn" class="page">
+            <div class="recipe-banner">
+                <span class="recipe-chapter">BAKERY 07</span>
+                <h2 class="recipe-name">牛角小布利</h2>
+            </div>
+            <div class="recipe-body">
+                <div class="section-label">材料配比 <span>INGREDIENTS</span></div>
+                <div class="ing-row"><span class="ing-n">中筋麵粉</span><span class="ing-v">150g</span></div>
+                <div class="ing-row"><span class="ing-n">低筋麵粉</span><span class="ing-v">150g</span></div>
+                <div class="ing-row"><span class="ing-n">雞蛋 (1 顆)</span><span class="ing-v">約 55g</span></div>
+                <div class="ing-row"><span class="ing-n">奶粉</span><span class="ing-v">10g</span></div>
+                <div class="ing-row"><span class="ing-n">牛奶</span><span class="ing-v">105cc</span></div>
+                <div class="ing-row"><span class="ing-n">二砂糖</span><span class="ing-v">35g</span></div>
+                <div class="ing-row"><span class="ing-n">速發酵母</span><span class="ing-v">2g</span></div>
+                <div class="ing-row"><span class="ing-n">鹽</span><span class="ing-v">3g</span></div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">無鹽奶油 (揉麵後加)</span><span class="ing-v">30g</span></div>
+
+                <div class="section-label" style="margin-top:60px;">製作流程 <span>METHOD</span></div>
+                <p style="font-size:1.1rem; line-height:2.4;">
+                    1. <b>起始攪拌：</b>除奶油外投入麵包機，啟動<b>行程 21</b>。<br>
+                    2. <b>後下奶油：</b>攪拌程序進行 4 分鐘後，加入軟化奶油繼續揉麵直至完成。<br>
+                    3. <b>成型：</b>整型靜置 5 分。分割 35g 搓水滴桿平捲起。<br>
+                    4. <b>烘烤：</b>發酵 40 分抹蛋液。<b>上火 190 / 下火 170</b> 烤 17 分鐘。
+                </p>
+            </div>
+        </div>
+
+        <!-- 曲奇餅乾 -->
+        <div id="c-cookie" class="page">
+            <div class="recipe-banner"><h2 class="recipe-name">職人創意曲奇</h2></div>
+            <div class="recipe-body">
+                <div class="section-label">材料配比</div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">無鹽奶油</span><span class="ing-v">150g</span></div>
+                <div class="ing-row"><span class="ing-n">低筋麵粉</span><span class="ing-v">280g</span></div>
+                <div class="ing-row"><span class="ing-n">細白砂糖</span><span class="ing-v">80g</span></div>
+                <div class="ing-row"><span class="ing-n">雞蛋 (1 顆)</span><span class="ing-v">55g</span></div>
+                <div class="ing-row"><span class="ing-n">炒熟杏仁片</span><span class="ing-v">50g</span></div>
+                <div class="section-label" style="margin-top:40px;">口味加粉選項</div>
+                <div class="ing-row"><span class="ing-n">可可 / 抹茶 / 咖啡粉</span><span class="ing-v">各 10~20g</span></div>
+                <div class="expert-notes">
+                    <h5>職人點評</h5>
+                    <div class="note-sec"><p class="note-txt">使用<b>大彎鉤攪拌</b>，避免打入過多空氣。冷凍保存，分切前稍回溫可切出俐落斷面。175°C 烤 25 分。</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 精品杏仁瓦片 -->
+        <div id="c-tuile" class="page">
+            <div class="recipe-banner"><h2 class="recipe-name">精品杏仁瓦片</h2></div>
+            <div class="recipe-body">
+                <div class="section-label">材料配比 (生杏仁片)</div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">無水奶油 (需煮出榛果香)</span><span class="ing-v">78g</span></div>
+                <div class="ing-row"><span class="ing-n">低筋麵粉</span><span class="ing-v">78g</span></div>
+                <div class="ing-row"><span class="ing-n">二砂糖</span><span class="ing-v">150g</span></div>
+                <div class="ing-row"><span class="ing-n">純蛋白 (6 顆)</span><span class="ing-v">210g</span></div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">生杏仁片 (不需炒熟)</span><span class="ing-v">510g</span></div>
+                <div class="ing-row"><span class="ing-n">鹽</span><span class="ing-v">少許</span></div>
+                
+                <div class="section-label" style="margin-top:60px;">工藝細節</div>
+                <p style="font-size:1.1rem; line-height:2.4;">
+                    1. <b>奶油處理：</b>加熱至琥珀色散發 <b>榛果香後過濾</b> 備用。<br>
+                    2. <b>混合：</b>材料拌勻後 <b>冷藏熟成隔夜</b>，讓杏仁吸飽蛋液。<br>
+                    3. <b>烘烤：</b>鋪平不重疊，150°C 烤至金黃。出爐 3 分鐘內密封鎖住脆度。
+                </p>
+            </div>
+        </div>
+
+        <!-- 10. 職人手作鮮奶酪 -->
+        <div id="c-panna" class="page">
+            <div class="recipe-banner">
+                <span class="recipe-chapter">DESSERT 10</span>
+                <h2 class="recipe-name">職人手作鮮奶酪</h2>
+            </div>
+            <div class="recipe-body">
+                <div class="weight-grid">
+                    <div class="weight-box">
+                        <div class="weight-title">6 杯 (標準)</div>
+                        <div class="ing-row"><span class="ing-n">鮮奶</span><span class="ing-v">720cc</span></div>
+                        <div class="ing-row"><span class="ing-n">鮮奶油</span><span class="ing-v">480cc</span></div>
+                        <div class="ing-row"><span class="ing-n">砂糖</span><span class="ing-v">84g</span></div>
+                        <div class="ing-row"><span class="ing-n">吉利丁片</span><span class="ing-v">14.4g</span></div>
+                    </div>
+                    <div class="weight-box" style="border:2px solid var(--tiffany-dark);">
+                        <div class="weight-title" style="color:var(--tiffany-dark);">10 杯 (基礎量)</div>
+                        <div class="ing-row"><span class="ing-n">鮮奶</span><span class="ing-v">1200cc</span></div>
+                        <div class="ing-row"><span class="ing-n">鮮奶油</span><span class="ing-v">800cc</span></div>
+                        <div class="ing-row"><span class="ing-n">砂糖</span><span class="ing-v">140g</span></div>
+                        <div class="ing-row"><span class="ing-n">吉利丁片</span><span class="ing-v">24g</span></div>
+                    </div>
+                    <div class="weight-box">
+                        <div class="weight-title">20 杯 (大量)</div>
+                        <div class="ing-row"><span class="ing-n">鮮奶</span><span class="ing-v">2400cc</span></div>
+                        <div class="ing-row"><span class="ing-n">鮮奶油</span><span class="ing-v">1600cc</span></div>
+                        <div class="ing-row"><span class="ing-n">砂糖</span><span class="ing-v">280g</span></div>
+                        <div class="ing-row"><span class="ing-n">吉利丁片</span><span class="ing-v">48g</span></div>
+                    </div>
+                </div>
+
+                <div class="section-label" style="margin-top:60px;">工法細則</div>
+                <p style="font-size:1.1rem; line-height:2.4;">
+                    1. <b>泡軟：</b>吉利丁片浸泡於<b>冰水</b>中軟化。<br>
+                    2. <b>煮融：</b>鮮奶與鮮奶油入鍋煮滾，加入砂糖攪拌至融化。<br>
+                    3. <b>降溫：</b>移開爐火稍作降溫。<br>
+                    4. <b>混合：</b>將泡軟的吉利丁片<b>擰乾水分</b>，加入鍋中攪拌至完全融化即可。<br>
+                    5. <b>分裝：</b>過濾後分裝入杯，冷藏凝固。
+                </p>
+
+                <div class="expert-notes">
+                    <h5>職人點評</h5>
+                    <div class="note-sec"><span class="note-title">製作核心</span><p class="note-txt"><b>溫度控制：</b>吉利丁不可在高溫下持續加熱，會破壞凝結力。務必在<b>離火降溫後</b>才加入拌勻。</p></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 11. 古早味綠豆冰沙 -->
+        <div id="s-greenbean" class="page">
+            <div class="recipe-banner">
+                <span class="recipe-chapter">SMOOTHIE 11</span>
+                <h2 class="recipe-name">古早味綠豆冰沙</h2>
+            </div>
+            <div class="recipe-body">
+                <div class="section-label">綠豆泥備料 (大量)</div>
+                <div class="ing-row"><span class="ing-n">毛綠豆</span><span class="ing-v">600g</span></div>
+                <div class="ing-row"><span class="ing-n">水</span><span class="ing-v">1800cc</span></div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">二砂糖</span><span class="ing-v">400g</span></div>
+                <div class="ing-row"><span class="ing-n">鹽</span><span class="ing-v">少許</span></div>
+
+                <div class="section-label" style="margin-top:60px;">備料工法</div>
+                <p style="font-size:1.1rem; line-height:2.4;">
+                    1. <b>熬煮：</b>綠豆洗淨，加入 1800cc 水，放入壓力鍋燉煮<b>至少 50 分鐘</b>。<br>
+                    2. <b>調味：</b>起鍋後趁熱加入 400g 二砂與少許鹽，攪拌均勻。<br>
+                    3. <b>保存：</b>放涼後冷藏保存。
+                </p>
+
+                <div class="section-label" style="margin-top:60px;">冰沙調製 (單杯)</div>
+                <div class="ing-row"><span class="ing-n">綠豆泥</span><span class="ing-v">2 匙 (白匙)</span></div>
+                <div class="ing-row"><span class="ing-n">糖機按鍵</span><span class="ing-v">5-2</span></div>
+                <div class="ing-row"><span class="ing-n">冰塊量</span><span class="ing-v">1.2 杯</span></div>
+                <p style="font-size:1.1rem; line-height:2.4; margin-top:20px;">
+                    將以上材料放入冰沙機攪打至綿密即可。
+                </p>
+            </div>
+        </div>
+
+        <!-- 飲品：果漾調茶系列 -->
+        <div id="d-fruit" class="page">
+            <div class="recipe-banner"><span class="recipe-chapter">DRINKS 10</span><h2 class="recipe-name">果漾調茶系列</h2></div>
+            <div class="recipe-body">
+                <div class="special-note">
+                    <b>核心換算公式 (無配料狀態)：</b><br>
+                    • 正常冰 / 少冰 ➔ 茶液 <b>250cc</b><br>
+                    • 微冰 / 去冰 ➔ 茶液 <b>300cc</b><br>
+                    • 完全去冰 ➔ 茶液 <b>350cc</b><br>
+                    <small>※ 若液位不足，補茶進雪克杯補齊。</small>
+                </div>
+                <div class="section-label">經典品項 (一行一料)</div>
+                <div class="ing-row"><span class="ing-n">甘蔗青茶</span><span class="ing-v">四季春 / 2-4糖 / 甘蔗汁 200cc</span></div>
+                <div class="ing-row"><span class="ing-n">茘枝紅茶 (不加糖)</span><span class="ing-v">盧紅 / 荔醬 3匙 (微2.5)</span></div>
+                <div class="ing-row"><span class="ing-n">柳橙綠茶</span><span class="ing-v">蘭綠 / 4糖 / 柳汁 80cc / 柳醬 2匙</span></div>
+                <div class="ing-row"><span class="ing-n">鮮柚綠茶</span><span class="ing-v">蘭綠 / 2糖 / 荔醬 1 / 紅柚醬 2</span></div>
+                <div class="ing-row"><span class="ing-n">百香QQ飲</span><span class="ing-v">蘭綠+百醬 2 / 4糖 / 百粒 2 / 寒天椰果</span></div>
+                <div class="ing-row"><span class="ing-n">雙柚四季春</span><span class="ing-v">四季春+韓柚1.5 / 4-1糖 / 紅柚1匙</span></div>
+                <div class="ing-row"><span class="ing-n">韓風柚香茶</span><span class="ing-v">四季春+韓柚 2 / 4糖 (熱補水150)</span></div>
+                <div class="ing-row"><span class="ing-n">蜂蜜貴妃甘露</span><span class="ing-v">水+蜂蜜2+荔醬1 / 檸30 / 寒天</span></div>
+                <div class="ing-row"><span class="ing-n">蜂蜜檸檬紅</span><span class="ing-v">盧紅+蜂蜜2+荔醬1 / 檸30 / 鹽少許</span></div>
+            </div>
+        </div>
+
+        <!-- 飲品：奶茶系列 -->
+        <div id="d-milktea" class="page">
+            <div class="recipe-banner"><span class="recipe-chapter">DRINKS 11</span><h2 class="recipe-name">職人奶茶系列</h2></div>
+            <div class="recipe-body">
+                <div class="special-note">
+                    <b>茶量標準：</b>正常 250 / 去 300 / 完 350cc。<br>
+                    <b>熱飲 SOP：</b>均額外加 <b>150cc 熱水</b>。
+                </div>
+                <div class="section-label">經典奶茶清單</div>
+                <div class="ing-row"><span class="ing-n">珍珠奶茶</span><span class="ing-v">盧紅 / 奶精 5 匙 / 紅糖 3 / 珍珠</span></div>
+                <div class="ing-row"><span class="ing-n">奶酪奶茶</span><span class="ing-v">盧紅 / 奶精 5 匙 / 紅糖 3 / 奶酪</span></div>
+                <div class="ing-row"><span class="ing-n">經典奶茶</span><span class="ing-v">盧紅 / 奶精 5 匙 / 紅糖 3 匙</span></div>
+                <div class="ing-row"><span class="ing-n">金萓奶茶</span><span class="ing-v">金萱青 / 奶精 5 匙 / 糖 4</span></div>
+                <div class="ing-row"><span class="ing-n">蘭花奶茶</span><span class="ing-v">蘭綠 / 奶精 5 匙 / 糖 4</span></div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">熱黑芝麻珍奶</span><span class="ing-v">盧紅 / 奶精 4 / 芝麻粉 2 / 珍珠</span></div>
+            </div>
+        </div>
+
+        <!-- 飲品：鮮奶拿鐵系列 -->
+        <div id="d-latte" class="page">
+            <div class="recipe-banner"><h2 class="recipe-name">鮮奶拿鐵系列</h2></div>
+            <div class="recipe-body">
+                <div class="special-note">拿鐵核心：杯底牛奶固定 <b>160cc</b>。熱飲將茶加熱，嚴禁加水。</div>
+                <div class="ing-row"><span class="ing-n">金萱拿鐵</span><span class="ing-v">牛奶 160 + 補金萱 + 4糖</span></div>
+                <div class="ing-row"><span class="ing-n">盧哈娜拿鐵</span><span class="ing-v">牛奶 160 + 補盧紅 + 紅糖 3</span></div>
+                <div class="ing-row"><span class="ing-n">抹茶拿鐵</span><span class="ing-v">1.5粉 + 熱水雪克 + 160奶 / 4糖</span></div>
+                <div class="ing-row"><span class="ing-n">法芙娜可可拿鐵</span><span class="ing-v">盧紅 + 可可 1.5 + 奶精 1 / 3糖</span></div>
+            </div>
+        </div>
+
+        <!-- 飲品：泰式系列 -->
+        <div id="d-thai" class="page">
+            <div class="recipe-banner"><h2 class="recipe-name">泰式系列</h2></div>
+            <div class="recipe-body">
+                <div class="special-note">對沖：茶葉 2 匙 + 500cc 滾水。比例：300(正) / 350(微) / 400(完)。</div>
+                <div class="ing-row"><span class="ing-n">泰式奶茶</span><span class="ing-v">二砂 1/3 + 奶水 2 + 煉乳 3</span></div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">法芙娜可可泰奶</span><span class="ing-v">奶精1+煉乳1+奶水2+可可0.8</span></div>
+                <div class="expert-notes"><h5>關鍵提醒</h5><p class="note-txt"><b>可可泰奶必須雪克：</b>必須在雪克杯充分搖勻以散開粉末。</p></div>
+            </div>
+        </div>
+
+        <!-- 飲品：可爾必思 -->
+        <div id="d-calpis" class="page">
+            <div class="recipe-banner"><h2 class="recipe-name">可爾必思系列</h2></div>
+            <div class="recipe-body">
+                <div class="section-label">乳酸調配 <span>無熱飲</span></div>
+                <div class="ing-row"><span class="ing-n">乳酸多多綠</span><span class="ing-v">水 + 原味可爾必思 80cc</span></div>
+                <div class="ing-row"><span class="ing-n">芒果可爾必思</span><span class="ing-v">芒醬 1 + 芒漿 1 + 芒可爾 2 匙</span></div>
+                <div class="ing-row"><span class="ing-n">百香可爾必思</span><span class="ing-v">百醬 1 + 百粒 5 + 原可爾 80cc</span></div>
+            </div>
+        </div>
+
+        <!-- 飲品：草本植萃 -->
+        <div id="d-herbal" class="page">
+            <div class="recipe-banner"><h2 class="recipe-name">草本植萃系列</h2></div>
+            <div class="recipe-body">
+                <div class="special-note">提示：冷飲均需雪克。</div>
+                <div class="ing-row"><span class="ing-n">百香瑪黛果茶</span><span class="ing-v">瑪黛+百醬 1.5 / 1糖 / 百粒 2</span></div>
+                <div class="ing-row"><span class="ing-n">芙香寒天青蘋茶</span><span class="ing-v">青蘋+蘋粒 1.5 / 2糖 / 寒天</span></div>
+                <div class="ing-row"><span class="ing-n">洛神蔓越梅果茶</span><span class="ing-v">洛神+蔓醬 1.5 / 2糖 / 檸 30</span></div>
+                <div class="ing-row"><span class="ing-n">藍莓寒天椰果茶</span><span class="ing-v">藍莓+藍醬 1.5 / 4糖 / 寒天椰果</span></div>
+                <div class="ing-row"><span class="ing-n">黑醋栗雙莓茶</span><span class="ing-v">黑醋栗+蔓 1.5 + 藍醬 1 / 3糖</span></div>
+                <div class="ing-row"><span class="ing-n">木槿野莓柚香茶</span><span class="ing-v">木槿300+四季150+韓柚1匙 / 4糖</span></div>
+                <div class="ing-row"><span class="ing-n">花漾蜜桃椰果茶</span><span class="ing-v">蜜桃茶 / 4糖 / 椰果</span></div>
+                <div class="ing-row"><span class="ing-n">貴妃荔香椰果茶</span><span class="ing-v">荔香+荔醬1.5 / 檸10 / 椰果</span></div>
+            </div>
+        </div>
+
+        <!-- 飲品：三角花茶 -->
+        <div id="d-tea-bag" class="page"><div class="recipe-banner"><h2>植萃三角花茶</h2></div><div class="recipe-body">
+            <div class="section-label">熱水沖泡項目</div>
+            <div class="ing-row"><span class="ing-n">玫瑰纖織 / 蜜桃烏龍</span><span class="ing-v">熱水 + 2糖</span></div>
+            <div class="ing-row"><span class="ing-n">元氣沁凝薄荷茶</span><span class="ing-v">熱水 + 2糖</span></div>
+            <div class="ing-row"><span class="ing-n">洋甘菊舒壓淨茶</span><span class="ing-v">熱水 + 1糖</span></div>
+            <div class="ing-row"><span class="ing-n">玫瑰紅棗國寶茶</span><span class="ing-v">熱水 + 2糖</span></div>
+        </div></div>
+
+        <!-- 飲品：其他 -->
+        <div id="d-others" class="page">
+            <div class="recipe-banner"><h2 class="recipe-name">冬瓜 / 冰沙系列</h2></div>
+            <div class="recipe-body">
+                <div class="section-label">冬瓜系列</div>
+                <div class="ing-row"><span class="ing-n">冬瓜檸檬</span><span class="ing-v">檸 30cc + 補滿冬瓜茶</span></div>
+                <div class="ing-row"><span class="ing-n">冬瓜鮮奶茶</span><span class="ing-v">牛奶 160 + 補滿冬瓜茶</span></div>
+                <div class="section-label" style="margin-top:40px;">夏日冰沙</div>
+                <div class="ing-row"><span class="ing-n">芒果冰沙</span><span class="ing-v">冰1.5杯 / 熱水80 / 醬3+漿4</span></div>
+                <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">藍柑橘奶蓋</span><span class="ing-v">藍15 + 檸15 + 可10 / 4-4糖 / 奶蓋</span></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 鬆餅數據渲染 (僅原味含奶粉) ---
+        const waffleData = [
+            { 
+                id: 'w-orig', title: '經典原味鬆餅', sugar: '70g', milk: '85cc', cream: '70cc', 
+                flavor: '<div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">全脂奶粉</span><span class="ing-v">25g</span></div><div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">柏泰奶香粉</span><span class="ing-v">5g</span></div>', 
+                notes: '<b>原味關鍵：</b>奶粉是提供飽滿乳香的核心。搭配 4g 鹽提煉焦香味。' 
+            },
+            { 
+                id: 'w-straw', title: '天然草莓鬆餅', sugar: '80g', milk: '50cc', cream: '50cc', 
+                flavor: '<div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">天然草莓粉</span><span class="ing-v">30g</span></div><div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">伯泰草莓粉 (定色)</span><span class="ing-v">10g</span></div>', 
+                notes: '<b>草莓修正：</b>牛奶量調整為 50cc。不加奶粉以突顯果味。氣炸建議低於 85°C。' 
+            },
+            { 
+                id: 'w-cocoa', title: '法芙娜可可鬆餅', sugar: '80g', milk: '100cc', cream: '80cc', 
+                flavor: '<div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">法芙娜(Valrhona)可可粉</span><span class="ing-v">30g</span></div>', 
+                notes: '<b>可可油脂：</b>不加奶粉，加重鮮奶油量確保組織潤滑。' 
+            },
+            { 
+                id: 'w-matcha', title: '靜岡抹茶鬆餅', sugar: '80g', milk: '110cc', cream: '80cc', 
+                flavor: '<div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">靜岡(Shizuoka)抹茶粉</span><span class="ing-v">30g</span></div>', 
+                notes: '<b>茶韻守護：</b>不加奶粉可防止茶味被乳化。抹茶吸水極強，補償牛奶為必須。' 
+            }
+        ];
+
+        let wHtml = "";
+        waffleData.forEach(d => {
+            wHtml += `
+            <div id="${d.id}" class="page">
+                <div class="recipe-banner">
+                    <span class="recipe-chapter">WAFFLE ARTISAN</span>
+                    <h2 class="recipe-name">${d.title}</h2>
+                </div>
+                <div class="recipe-body">
+                    <div class="section-label">第一階段：水合 <span>STAGE 01</span></div>
+                    ${d.flavor}
+                    <div class="ing-row"><span class="ing-n">高筋麵粉</span><span class="ing-v">100g</span></div>
+                    <div class="ing-row"><span class="ing-n">中筋麵粉</span><span class="ing-v">320g</span></div>
+                    <div class="ing-row"><span class="ing-n">玉米澱粉</span><span class="ing-v">80g</span></div>
+                    <div class="ing-row"><span class="ing-n">鹽</span><span class="ing-v">4g</span></div>
+                    <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">二砂糖</span><span class="ing-v">${d.sugar}</span></div>
+                    <div class="ing-row"><span class="ing-n">牛奶</span><span class="ing-v">${d.milk}</span></div>
+                    <div class="ing-row"><span class="ing-n">雞蛋 (全蛋液)</span><span class="ing-v">2 顆</span></div>
+                    <div class="ing-row"><span class="ing-n">鮮奶油</span><span class="ing-v">${d.cream}</span></div>
+                    <div class="ing-row"><span class="ing-n">靈魂湯種 (130g)</span><span class="ing-v">1 團</span></div>
+                    
+                    <div class="section-label" style="margin-top:60px;">第二階段：揉麵、分割 <span>STAGE 02</span></div>
+                    <div class="step-num" style="font-size:1rem; color:#666; margin-bottom:10px;">1. 加入酵母與奶油揉至光滑亮澤。</div>
+                    <div class="ing-row"><span class="ing-n">速發酵母</span><span class="ing-v">2 匙</span></div>
+                    <div class="ing-row"><span class="ing-n">無鹽奶油</span><span class="ing-v">120g</span></div>
+                    
+                    <div class="step-num" style="font-size:1rem; color:#666; margin-top:20px; margin-bottom:10px;">2. 停機，將泡打粉像下雪般均勻灑在麵團表面，中速攪拌 1.5~2 分鐘。</div>
+                    <div class="ing-row" style="background:var(--tiffany-light)"><span class="ing-n">泡打粉 (末段揉入)</span><span class="ing-v">4g</span></div>
+
+                    <div class="special-note">每顆 <b>14.5g</b> 分割 (單份產出約 80 顆)。靜置 > 1小時。</div>
+                    <div class="expert-notes"><h5>職人點評</h5><div class="note-sec"><p class="note-txt">${d.notes}</p></div></div>
+                </div>
+            </div>`;
+        });
+        document.getElementById('waffle-container').innerHTML = wHtml;
+
+        function openPage(id) {
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(p => { p.style.display = 'none'; p.classList.remove('active'); });
+
+            const target = document.getElementById(id);
+            if(target) {
+                target.style.display = 'block';
+                setTimeout(() => target.classList.add('active'), 10);
+                target.scrollTop = 0;
+            }
+            document.getElementById('menu-btn').style.display = (id === 'page-cover') ? 'none' : 'block';
+            document.getElementById('menu-overlay').classList.remove('open');
+        }
+
+        function toggleMenu() { document.getElementById('menu-overlay').classList.toggle('open'); }
+    </script>
+</body>
+</html>
+
+
